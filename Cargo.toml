@@ -11,4 +11,4 @@ keywords = ["sqlx", "orm"]
 
 [dependencies]
 time = { version = "0.3" }
-humble_orm_macro = "*"
+humble_orm_macro = "0.1"
