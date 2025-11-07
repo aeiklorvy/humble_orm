@@ -1,0 +1,14 @@
+[package]
+name = "hubmle_orm"
+version = "0.1.0"
+edition = "2024"
+description = "A small add-on to sqlx that provides some ORM capabilities for a better DBMS experience"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/aeiklorvy/humble_orm"
+readme = "README.md"
+categories = ["database"]
+keywords = ["sqlx", "orm"]
+
+[dependencies]
+time = { version = "0.3" }
+humble_orm_macro = "*"
