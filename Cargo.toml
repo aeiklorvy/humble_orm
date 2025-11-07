@@ -1,5 +1,5 @@
 [package]
-name = "hubmle_orm"
+name = "humble_orm"
 version = "0.1.0"
 edition = "2024"
 description = "A small add-on to sqlx that provides some ORM capabilities for a better DBMS experience"
