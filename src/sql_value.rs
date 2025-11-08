@@ -1,6 +1,6 @@
 /// Represents any value that can be translated into an SQL string
 pub trait SqlValue {
-    /// Defines how a value should be translated into an SQL string.
+    /// Defines how a value should be translated into an SQL string
     fn to_sql(&self) -> String;
 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "humble_orm"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "A small add-on to sqlx that provides some ORM capabilities for a better DBMS experience"
 license = "MIT OR Apache-2.0"

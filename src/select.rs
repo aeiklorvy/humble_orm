@@ -37,6 +37,8 @@ pub struct Select {
     group_by: String,
     having: Vec<String>,
     order_by: String,
+    limit: Option<u32>,
+    offset: Option<u32>,
 }
 
 impl Select {
@@ -49,6 +51,8 @@ impl Select {
             group_by: String::new(),
             having: vec![],
             order_by: String::new(),
+            limit: None,
+            offset: None,
         }
     }
 
@@ -141,6 +145,18 @@ impl Select {
     /// Adds a condition for grouping the selection
     pub fn with_having<H: Into<String>>(mut self, having: H) -> Self {
         self.push_having(having);
+        self
+    }
+
+    /// Limits the number of rows returned by the query
+    pub fn with_limit(mut self, limit: u32) -> Self {
+        self.set_limit(limit);
+        self
+    }
+
+    /// Specifies which line to start receiving data from
+    pub fn with_limit_offset(mut self, offset: u32) -> Self {
+        self.set_limit_offset(offset);
         self
     }
 
@@ -255,6 +271,16 @@ impl Select {
         self.having.push(having.into());
     }
 
+    /// Limits the number of rows returned by the query
+    pub fn set_limit(&mut self, limit: u32) {
+        self.limit = Some(limit);
+    }
+
+    /// Specifies which line to start receiving data from
+    pub fn set_limit_offset(&mut self, offset: u32) {
+        self.offset = Some(offset);
+    }
+
     /// Performs query building by consuming itself
     pub fn build(self) -> String {
         let mut sql = format!("SELECT {} FROM {}", self.columns, self.table);
@@ -273,6 +299,14 @@ impl Select {
         if !self.order_by.is_empty() {
             sql += " ORDER BY ";
             sql += &self.order_by;
+        }
+        if let Some(limit) = self.limit {
+            // use write to eliminate unnecessary allocations
+            use std::fmt::Write;
+            write!(sql, " LIMIT {limit}").unwrap();
+            if let Some(offset) = self.offset {
+                write!(sql, " OFFSET {offset}").unwrap();
+            }
         }
         sql
     }

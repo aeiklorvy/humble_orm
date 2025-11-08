@@ -52,6 +52,7 @@ Note that the suffix with the DBMS type in the macro name is very important – 
 Each generated structure will have the following methods:
 - `select_all`: selects all table rows from the database;
 - `insert`: inserts a record by sending all columns of the model;
+- `create_table`: сreates a new table in the database;
 
 If a primary key has been defined in the table:
 - `get_by_primary_key`: selects a record by primary key value;

@@ -1,9 +1,9 @@
+/// Represents any value that can be considered as an SQL table
 pub trait SqlTable: Default {
-    // The name of the table (for building the query)
+    /// The name of the table (for building queries)
+    ///
+    /// It should return an already escaped string like `"\"User\""`.
     fn table_name() -> &'static str;
-
-    // The name of the column that is the primary key (for building the query)
-    fn id_column_name() -> &'static str;
 
     /// Returns a table as an Entity (for building queries)
     fn as_table() -> Self {

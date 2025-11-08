@@ -95,6 +95,16 @@ impl SqlColumn {
         format!("MAX({self}) AS {alias}")
     }
 
+    /// produces `{field} ASC` (for ordering)
+    pub fn asc(self) -> String {
+        format!("{self} ASC")
+    }
+
+    /// produces `{field} DESC` (for ordering)
+    pub fn desc(self) -> String {
+        format!("{self} DESC")
+    }
+
     /// produces `{field} IS NULL`
     pub fn is_null(self) -> String {
         format!("{self} IS NULL")
