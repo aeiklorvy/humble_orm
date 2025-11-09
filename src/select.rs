@@ -16,17 +16,17 @@ where
 ///
 /// ```no_run
 /// let sql: String = Select::new()
-///     .with_columns([User::NAME, User::AGE])
+///     .with_columns([User::Name, User::Age])
 ///     .with_table(User::as_table())
-///     .with_where_cond(User::ACTIVE.eq(true))
+///     .with_where_cond(User::Active.eq(true))
 ///     .build();
 /// ```
 /// Or same in other way:
 /// ```no_run
 /// let mut select = Select::new();
-/// select.push_columns([User::NAME, User::AGE]);
+/// select.push_columns([User::Name, User::Age]);
 /// select.set_table(User::as_table());
-/// select.push_where_cond(User::ACTIVE.eq(true));
+/// select.push_where_cond(User::Active.eq(true));
 /// let sql: String = select.build();
 /// ```
 #[derive(Clone)]
@@ -189,7 +189,7 @@ impl Select {
         if !self.table.is_empty() {
             panic!("table already exists, use join instead");
         }
-        self.table = T::table_name().into();
+        self.table = T::TABLE_NAME.into();
     }
 
     /// Joins the table for the selection
@@ -222,7 +222,7 @@ impl Select {
         // use write to eliminate unnecessary allocations
         use std::fmt::Write;
         let on_cond = format_cond(on);
-        write!(self.table, " INNER JOIN {} ON {on_cond}", T::table_name()).unwrap();
+        write!(self.table, " INNER JOIN {} ON {on_cond}", T::TABLE_NAME).unwrap();
     }
 
     /// Joins the table for the selection
@@ -242,7 +242,7 @@ impl Select {
         // use write to eliminate unnecessary allocations
         use std::fmt::Write;
         let on_cond = format_cond(on);
-        write!(self.table, " LEFT JOIN {} ON {on_cond}", T::table_name()).unwrap();
+        write!(self.table, " LEFT JOIN {} ON {on_cond}", T::TABLE_NAME).unwrap();
     }
 
     /// Adds a selection condition

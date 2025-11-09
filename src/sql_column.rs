@@ -5,6 +5,7 @@ use crate::SqlValue;
 pub struct SqlColumn {
     name: &'static str,
     table_name: &'static str,
+    is_primary: bool,
 }
 
 impl std::fmt::Display for SqlColumn {
@@ -27,135 +28,162 @@ impl SqlValue for SqlColumn {
 }
 
 impl SqlColumn {
-    pub const fn new(name: &'static str, table_name: &'static str) -> Self {
-        Self { name, table_name }
+    /// Creates a new sql column
+    ///
+    /// # Safety
+    ///
+    /// The function relies on the passed values to be properly escaped.
+    /// Otherwise, the constructed queries may be incorrect due to the
+    /// matching of names with SQL keywords. An example of the correct use of
+    /// the function:
+    ///
+    /// ```no_run
+    /// let user_id_col = SqlColumn::new("\"id\"", "\"User\"", true);
+    /// let user_name_col = SqlColumn::new("\"name\"", "\"User\"", false);
+    /// ```
+    pub const unsafe fn new(
+        name: &'static str,
+        table_name: &'static str,
+        is_primary: bool,
+    ) -> Self {
+        Self {
+            name,
+            table_name,
+            is_primary,
+        }
     }
 
-    /// returns name of the column
-    pub fn name(&self) -> &str {
-        self.name
-            .strip_suffix('\"')
-            .unwrap_or(self.name)
-            .strip_prefix('\"')
-            .unwrap_or(self.name)
+    /// Returns name of the column
+    pub const fn name(&self) -> &'static str {
+        trim_quotes(self.name)
     }
 
-    /// produces an alias: `{field} AS {alias}`
+    /// Returns name of the table
+    pub const fn table_name(&self) -> &'static str {
+        trim_quotes(self.table_name)
+    }
+
+    /// Returns `true` if a primary key is defined for the column
+    pub fn is_primary(&self) -> bool {
+        self.is_primary
+    }
+
+    /// Produces an alias: `{field} AS {alias}`
     pub fn alias(self, alias: &str) -> String {
         format!("{self} AS {alias:?}")
     }
 
-    /// produces `COUNT({field})`
+    /// Produces `COUNT({field})`
     pub fn count(self) -> String {
         format!("COUNT({self})")
     }
 
-    /// produces `COUNT({field}) AS {alias}`
+    /// Produces `COUNT({field}) AS {alias}`
     pub fn count_as(self, alias: &str) -> String {
         format!("COUNT({self}) AS {alias:?}")
     }
 
-    /// produces `SUM({field})`
+    /// Produces `SUM({field})`
     pub fn sum(self) -> String {
         format!("SUM({self})")
     }
 
-    /// produces `SUM({field}) AS {alias}`
+    /// Produces `SUM({field}) AS {alias}`
     pub fn sum_as(self, alias: &str) -> String {
         format!("SUM({self}) AS {alias:?}")
     }
 
-    /// produces `AVG({field})`
+    /// Produces `AVG({field})`
     pub fn avg(self) -> String {
         format!("AVG({self})")
     }
 
-    /// produces `AVG({field}) AS {alias}`
+    /// Produces `AVG({field}) AS {alias}`
     pub fn avg_as(self, alias: &str) -> String {
         format!("AVG({self}) AS {alias}")
     }
 
-    /// produces `MIN({field})`
+    /// Produces `MIN({field})`
     pub fn min(self) -> String {
         format!("MIN({self})")
     }
 
-    /// produces `MIN({field}) AS {alias}`
+    /// Produces `MIN({field}) AS {alias}`
     pub fn min_as(self, alias: &str) -> String {
         format!("MIN({self}) AS {alias}")
     }
 
-    /// produces `MAX({field})`
+    /// Produces `MAX({field})`
     pub fn max(self) -> String {
         format!("MAX({self})")
     }
 
-    /// produces `MAX({field}) AS {alias}`
+    /// Produces `MAX({field}) AS {alias}`
     pub fn max_as(self, alias: &str) -> String {
         format!("MAX({self}) AS {alias}")
     }
 
-    /// produces `{field} ASC` (for ordering)
+    /// Produces `{field} ASC` (for ordering)
     pub fn asc(self) -> String {
         format!("{self} ASC")
     }
 
-    /// produces `{field} DESC` (for ordering)
+    /// Produces `{field} DESC` (for ordering)
     pub fn desc(self) -> String {
         format!("{self} DESC")
     }
 
-    /// produces `{field} IS NULL`
+    /// Produces `{field} IS NULL`
     pub fn is_null(self) -> String {
         format!("{self} IS NULL")
     }
 
-    /// produces `{field} IS NOT NULL`
+    /// Produces `{field} IS NOT NULL`
     pub fn is_not_null(self) -> String {
         format!("{self} IS NOT NULL")
     }
 
-    /// produces `A = B`
+    /// Produces `A = B`
     pub fn eq<V: SqlValue>(self, value: V) -> String {
         format!("{self} = {}", value.to_sql())
     }
 
-    /// produces `A != B`
+    /// Produces `A != B`
     pub fn ne<V: SqlValue>(self, value: V) -> String {
         format!("{self} != {}", value.to_sql())
     }
 
-    /// produces `A > B`
+    /// Produces `A > B`
     pub fn gt<V: SqlValue>(self, value: V) -> String {
         format!("{self} > {}", value.to_sql())
     }
 
-    /// produces `A >= B`
+    /// Produces `A >= B`
     pub fn ge<V: SqlValue>(self, value: V) -> String {
         format!("{self} >= {}", value.to_sql())
     }
 
-    /// produces `A < B`
+    /// Produces `A < B`
     pub fn lt<V: SqlValue>(self, value: V) -> String {
         format!("{self} < {}", value.to_sql())
     }
 
-    /// produces `A <= B`
+    /// Produces `A <= B`
     pub fn le<V: SqlValue>(self, value: V) -> String {
         format!("{self} <= {}", value.to_sql())
     }
 
-    /// produces `A LIKE B`
+    /// Produces `A LIKE B`
     pub fn like<V: SqlValue>(self, value: V) -> String {
         format!("{self} LIKE {}", value.to_sql())
     }
 
-    /// produces `A NOT LIKE B`
+    /// Produces `A NOT LIKE B`
     pub fn not_like<V: SqlValue>(self, value: V) -> String {
         format!("{self} NOT LIKE {}", value.to_sql())
     }
 
-    /// produces `A IN (...)`
+    /// Produces `A IN (...)`
     pub fn in_list<I>(self, values: I) -> String
     where
         I: IntoIterator,
@@ -169,7 +197,7 @@ impl SqlColumn {
         }
     }
 
-    /// produces `A NOT IN (...)`
+    /// Produces `A NOT IN (...)`
     pub fn not_in_list<I>(self, values: I) -> String
     where
         I: IntoIterator,
@@ -183,7 +211,7 @@ impl SqlColumn {
         }
     }
 
-    /// produces `A BETWEEN (B) AND (C)`
+    /// Produces `A BETWEEN (B) AND (C)`
     pub fn between<L, R>(self, left: L, right: R) -> String
     where
         L: SqlValue,
@@ -194,5 +222,47 @@ impl SqlColumn {
             left.to_sql(),
             right.to_sql()
         )
+    }
+}
+
+const fn trim_quotes(s: &'static str) -> &'static str {
+    // all these complexities are needed to make the function `const`
+
+    // convert to a byte slice, because we don't know how
+    // to work with strings in `const`
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+
+    if len >= 2 {
+        let first = bytes[0];
+        let last = bytes[len - 1];
+        match (first, last) {
+            (b'\"', b'\"') | (b'\'', b'\'') => {
+                unsafe {
+                    // SAFETY:
+                    //
+                    // because of: `Index` is not yet stable as a const trait
+                    // at the moment we can't just do that:
+                    // let new_slice = &bytes[1 .. len-1];
+                    //
+                    // We'll have to tinker with the raw pointers, and that's
+                    // the plan of action:
+                    // - delete the first quotation mark by increasing the
+                    //   pointer to the beginning of the slice by one.
+                    // - remove the second quotation mark, reducing the size
+                    //   of the slice by one
+                    //
+                    // The cut-off quotes are part of a static string, so
+                    // memory leaks are excluded. And we know for sure that
+                    // the slice length allows us to reduce its size by 2
+                    // bytes.
+                    let new_slice = std::slice::from_raw_parts(bytes.as_ptr().add(1), len - 1);
+                    std::str::from_utf8_unchecked(new_slice)
+                }
+            }
+            _ => s, // there are no quotes in the string
+        }
+    } else {
+        s // length of the string does not imply the presence of quotation marks
     }
 }
