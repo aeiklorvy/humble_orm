@@ -1,4 +1,4 @@
-# What is this
+# Humble ORM
 
 This is a small add-on to sqlx that provides some ORM capabilities for a
 better DBMS experience
@@ -76,12 +76,6 @@ If a primary key has been defined in the table:
 - `insert_generating_primary_key`: same as `insert`, but gets primary key
   value from the DBMS;
 
-If a foreign key has been defined in the table:
-- `get_related_by_` + name: selects a row of the related table according to
-  field value in the model;
-- `get_all_related_by_` + name: selects all rows of the related table
-  according to field value in the model;
-
 Also, each structure, in addition to the fields containing the value, will
 contain a constant representing the entity corresponding to the column name.
 This is nothing more than information for building queries. For example, the
@@ -94,7 +88,6 @@ So, let's summarize and figure out what methods and constants the
 - `select_all`, `insert`: basic orm methods;
 - `get_by_primary_key`, `insert_generating_primary_key`, `update`, `delete`:
   because `PRIMARY KEY` was defined;
-- `get_related_by_order_id`, `get_all_related_by_order_id`: because `FOREIGN KEY` was defined;
 
 ## What generates the macro
 
@@ -108,14 +101,6 @@ the impl:
 /// Internally, it uses prepared statements, so this is the most preferred way
 /// to get a single row of the table using the primary key
 async fn get_by_#[primary_key](pool: &#[pool], value: #[primary_key_type]) -> Result<Self, sqlx::Error>;
-
-/// Selects a row of the related table according to the foreign key and field
-/// value in the model
-async fn get_related_by_#[field](&self, pool: &#[pool]) -> Result<#[model]>, sqlx::Error>;
-
-/// Selects all rows of the related table according to the foreign key and
-/// field value in the model
-async fn get_all_related_by_#[field](&self, pool: &#[pool]) -> Result<Vec<#[model]>, sqlx::Error>;
 
 /// Selects all table rows from the database
 async fn select_all(pool: &#[pool]) -> Result<Vec<Self>, sqlx::Error>;
