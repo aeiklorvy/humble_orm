@@ -18,6 +18,7 @@ pub trait SqlTable: Default {
         Self::default()
     }
 
+    /// Checks if there is a column with the specified name in the table
     fn has_column(name: &str) -> bool {
         Self::COLUMNS
             .iter()
@@ -25,6 +26,7 @@ pub trait SqlTable: Default {
             .is_some()
     }
 
+    /// Returns the index of the column with the specified name in the table
     fn column_index(name: &str) -> Option<usize> {
         Self::COLUMNS
             .iter()
@@ -33,6 +35,7 @@ pub trait SqlTable: Default {
             .map(|(i, _)| i)
     }
 
+    /// Returns the name of a column in a table by its index
     fn column_name_at(index: usize) -> Option<&'static str> {
         Self::COLUMNS.get(index).map(|col| col.name())
     }

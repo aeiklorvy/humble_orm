@@ -2,12 +2,12 @@ use humble_orm::*;
 
 generate_structs_sqlite! {
     CREATE TABLE UserData (
-        id INTEGER NOT NULL PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         userValue1 varchar(256) NOT NULL,
         userValue2 INTEGER NOT NULL
     );
     CREATE TABLE User (
-        id INTEGER NOT NULL PRIMARY KEY,
+        id INTEGER PRIMARY KEY,
         name varchar(64) NOT NULL,
         data_id INTEGER DEFAULT NULL,
         FOREIGN KEY (data_id) REFERENCES UserData (id)
@@ -15,10 +15,10 @@ generate_structs_sqlite! {
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), sqlx::Error> {
+async fn main() {
     // create sqlite database in memory
     let url = "sqlite::memory:";
-    let pool = sqlx::SqlitePool::connect(url).await?;
+    let pool = sqlx::SqlitePool::connect(url).await.unwrap();
 
     // create table UserData
     UserData::create_table(&pool).await.unwrap();
@@ -34,10 +34,7 @@ async fn main() -> Result<(), sqlx::Error> {
         };
         data.insert(&pool).await.unwrap();
         // make sure that the record is added
-        assert_eq!(
-            UserData::get_by_primary_key(&pool, 1).await.unwrap().id,
-            data.id
-        );
+        assert_eq!(UserData::get_by_id(&pool, 1).await.unwrap().id, data.id);
     }
 
     // Now let's add a User
@@ -47,12 +44,12 @@ async fn main() -> Result<(), sqlx::Error> {
             data_id: Some(1),
             name: "Bob".into(),
         };
-        user.insert_generating_primary_key(&pool).await.unwrap();
+        user.insert_generating_id(&pool).await.unwrap();
         // make sure that id was updated
         assert_eq!(user.id, 1);
 
         // make sure that the record is added
-        let user2 = User::get_by_primary_key(&pool, 1).await.unwrap();
+        let user2 = User::get_by_id(&pool, 1).await.unwrap();
         assert_eq!(user2.id, user.id);
         assert_eq!(user2.name, user.name);
     }
@@ -67,10 +64,11 @@ async fn main() -> Result<(), sqlx::Error> {
     .await
     .unwrap();
 
+    // But this user will be unrelated to another table
     User {
         id: 3,
         name: "John".into(),
-        data_id: Some(1),
+        data_id: None, // means NULL
     }
     .insert(&pool)
     .await
@@ -84,15 +82,17 @@ async fn main() -> Result<(), sqlx::Error> {
     // User { id: 2, name: "Jack", data_id: Some(1) }
     // UserData { id: 1, user_value_1: "some user value", user_value_2: 12345 }
     //
-    // User { id: 3, name: "John", data_id: Some(1) }
-    // UserData { id: 1, user_value_1: "some user value", user_value_2: 12345 }
+    // User { id: 3, name: "John", data_id: None }
+    // no user data
     //
     for user in User::select_all(&pool).await.unwrap() {
-        let user_data = user.get_related_by_data_id(&pool).await.unwrap();
         println!("{user:?}");
-        println!("{user_data:?}");
+        if let Some(id) = user.data_id {
+            let user_data = UserData::get_by_id(&pool, id).await.unwrap();
+            println!("{user_data:?}");
+        } else {
+            println!("no user data");
+        }
         println!(); // line break
     }
-
-    Ok(())
 }

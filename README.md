@@ -11,6 +11,14 @@ sqlx = { version = "*", features = ["time"] }
 ```
 This is the most necessary, you can add the rest to your taste.
 
+You can also specify the `serde` feature so that the generated structures
+support serialization and deserialization. If you want to use `serde`, then
+you will need to add a dependency to the project:
+
+```toml
+serde = { version = "*", features = ["derive"] }
+```
+
 ## Models/Entities generation
 
 Let's imagine that we have a database schema, and we can wrap it in a macro,
@@ -88,16 +96,22 @@ So, let's summarize and figure out what methods and constants the
   because `PRIMARY KEY` was defined;
 - `get_related_by_order_id`, `get_all_related_by_order_id`: because `FOREIGN KEY` was defined;
 
-## Generated methods interface
+## What generates the macro
+
+The generated structs `Order` and `OrderDetails` will also be complemented by
+the impl:
 
 ```Rust
 /// Selects a row from the database where the primary key corresponds to the
 /// specified value
-async fn get_by_primary_key(pool: &#[pool], key: #[field_type]) -> Result<Self, sqlx::Error>;
+///
+/// Internally, it uses prepared statements, so this is the most preferred way
+/// to get a single row of the table using the primary key
+async fn get_by_#[primary_key](pool: &#[pool], value: #[primary_key_type]) -> Result<Self, sqlx::Error>;
 
 /// Selects a row of the related table according to the foreign key and field
 /// value in the model
-async fn get_related_by_#[field](&self, pool: &#[pool]) -> Result<Option<#[model]>, sqlx::Error>;
+async fn get_related_by_#[field](&self, pool: &#[pool]) -> Result<#[model]>, sqlx::Error>;
 
 /// Selects all rows of the related table according to the foreign key and
 /// field value in the model
@@ -115,7 +129,7 @@ async fn insert(&self, pool: &#[pool]) -> Result<(), sqlx::Error>;
 
 /// Inserts a record via `INSERT`, skipping the primary key field, and after
 /// insertion sets the primary key value from the DBMS to the model
-async fn insert_generating_primary_key(&mut self, pool: &#[pool]) -> Result<(), sqlx::Error>;
+async fn insert_generating_#[primary_key](&mut self, pool: &#[pool]) -> Result<(), sqlx::Error>;
 
 /// Deletes a row in the database that corresponds to the value of the primary
 /// key field, and the model will be consumed
@@ -127,6 +141,20 @@ async fn create_table(pool: &#[pool], drop_if_exists: bool) -> Result<(), sqlx::
 /// Deletes the entire table from the database, does nothing if there is no
 /// such table
 async fn drop_table(pool: &#[pool]) -> Result<(), sqlx::Error>;
+```
+
+Separately to the structure, there will also be a module with type aliases for
+the fields of the structure:
+
+```Rust
+pub mod OrderColumnTypes {
+    pub type IdType = i64;
+    pub type CreateDateType = Option<sqlx::time::Date>;
+}
+pub mod OrderDetailsColumnTypes {
+    pub type IdType = i64;
+    pub type OrderIdType = i64;
+}
 ```
 
 ## Using сolumn types

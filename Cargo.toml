@@ -1,6 +1,6 @@
 [package]
 name = "humble_orm"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 description = "A small add-on to sqlx that provides some ORM capabilities for a better DBMS experience"
 license = "MIT OR Apache-2.0"
@@ -13,6 +13,9 @@ keywords = ["sqlx", "orm"]
 time = "0.3"
 humble_orm_macro = "0.1"
 
+[features]
+serde = ["humble_orm_macro/serde"]
+
 [dev-dependencies]
 sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio", "time"] }
-tokio = { version = "1.48", features = ["macros"] }
+tokio = { version = "1.48", default-features = false, features = ["macros"] }
